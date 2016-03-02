@@ -1,13 +1,16 @@
-main: clean 
-	gcc -Ofast database.c thread.c main.c config.c log.c case.c -lm -lpthread
-case:
-	gcc -c case.c
-createdb:
-	gcc -Ofast database.c createdb.c config.c case.c -o createdb -lm -lpthread 
+.PHONY: clean all
+
+CFLAGS+= -Ofast -g -Wall -Wextra
+LIBS=-lm -lpthread
+
+all: main
+
+
+main: database.o thread.o main.o config.o log.o case.o
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+createdb: database.o createdb.o config.o case.o
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
 clean:
-	touch main
-	touch createdb
-	touch log.txt
-	rm createdb
-	rm main
-	rm log.txt
+	rm -f main log.txt createdb *.o
