@@ -40,18 +40,17 @@ static void *thread_start(void *arg)
     int match_percentage_i = main_config->match_percentage;
     float match_percentage = ((float)match_percentage_i)/1000.0f;
     uint8_t *data = NULL;
-    for(x = tinfo->start_index; x< tinfo->stop_index && x<index_size; x++)
+    for(x = tinfo->start_index; x< (int)tinfo->stop_index && x<(int)index_size; x++)
     {
 
         long index = *index_offset[x];
-        int dnalen;
         data = get_db_data(maindb, index, *index_len[x], data);
         for(list = (data_list_t *)search_list->root; list; list = (data_list_t *)list->next)
         {
             tinfo->len = list->str_len;
             tinfo->search_string = list->str;
             float best_possible_score = (float)(((STRONG_MATCH_MULT *tinfo->len)+((tinfo->len<<1))));
-            unsigned int best_match = best_match_score(data, list->data, *index_len[x] * 2, list->str_len, best_possible_score, match_percentage);
+            unsigned int best_match = best_match_score(data, list->data, *index_len[x] * 2, list->str_len);
             float score = ((float)best_match/best_possible_score);
             //printf("T%i SCORE %f %i\n", tinfo->thread_num, score, x);
             if(score >= match_percentage)

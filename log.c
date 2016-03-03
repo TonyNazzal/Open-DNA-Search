@@ -36,9 +36,6 @@ void l(string line, logfile *mylogfile)
 {
 	char buf[strlen(line) + 255];
 	strcpy(buf,"");
-	time_t t;
-	time(&t);
-	string now = ctime_r(&t, buf);
 	buf[strlen(buf)-1] = '\0';
 	strcat(buf, " : ");
 	strcat(buf, line);
@@ -55,9 +52,6 @@ void lf(string line)
     //logfile *mylogfile;
 	char buf[strlen(line) + 255];
 	strcpy(buf,"");
-	time_t t;
-	time(&t);
-	string now = ctime_r(&t, buf);
 	buf[strlen(buf)-1] = '\0';
 	strcat(buf, " : ");
 	strcat(buf, line);
@@ -75,7 +69,6 @@ void ls(const string fmt, ...)
     string p;
     string np;
     va_list ap;
-    int result;
     p = malloc(size);
     if(NULL == p)
         return lf("logging error");
@@ -93,7 +86,6 @@ void ls(const string fmt, ...)
            size = n+1;
         else
            size *= 2;
-        integer *result;
         if (NULL == (np = realloc(p, size))) {
            free(p);
            return lf("logging error");

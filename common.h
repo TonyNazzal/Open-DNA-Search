@@ -30,7 +30,7 @@
 #include<fcntl.h>
 #include<time.h>
 #include<unistd.h>
-
+#include <pthread.h>
 typedef uint8_t byte;
 typedef uint32_t integer;
 typedef char * string;

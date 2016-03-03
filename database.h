@@ -23,7 +23,7 @@
 #include "common.h"
 
 //#define BASECODES
-const static uint8_t U = 0, C = 1, G = 2, T = 3, A = 4, R = 5, Y = 6, K = 7, M = 8, S = 9, W = 10, B = 11, D = 12, H = 13, V = 14, N = 15;
+static const uint8_t U = 0, C = 1, G = 2, T = 3, A = 4, R = 5, Y = 6, K = 7, M = 8, S = 9, W = 10, B = 11, D = 12, H = 13, V = 14, N = 15;
 
 
 
@@ -140,7 +140,7 @@ uint8_t *get_db_data(database_t *db, long index, uint32_t length, uint8_t *data)
 uint8_t match_bytecodes(uint8_t bc1, uint8_t bc2);
 long get_data_index(db_index_t *entry);
 void match_data(uint8_t *str1, uint8_t* str2, unsigned int length, match_counts *score);
-float best_match_score(uint8_t *str1, uint8_t *str2, int len1, int len2, float best_possible_score, float match_percentage);
+float best_match_score(uint8_t *str1, uint8_t *str2, int len1, int len2);
 
 unsigned int calculate_score(match_counts *score);
 uint8_t base_to_code(char code);

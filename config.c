@@ -48,7 +48,6 @@ config *read_config(string filename)
 
 int get_config_int(string name, config *myconfig, int *value)
 {
-	string intpos;
 	string temp;
 	string last;
 	int x = 0;
@@ -68,11 +67,11 @@ int get_config_int(string name, config *myconfig, int *value)
 
 		}
 	}
+	return FAILURE;
 }
 
 int get_config_string(string name, config *myconfig, string *value)
 {
-	string intpos;
 	string temp;
 	string last;
 	int x = 0;
@@ -96,6 +95,7 @@ int get_config_string(string name, config *myconfig, string *value)
 
 		}
 	}
+	return FAILURE;
 }
 
 int is_comment(char * str)

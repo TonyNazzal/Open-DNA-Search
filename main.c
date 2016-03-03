@@ -26,6 +26,7 @@
 #include "thread.h"
 #include "config.h"
 #include "log.h"
+int pthread_tryjoin_np(pthread_t thread, void **retval);
 
 int main(int argc, char **argv)
 {
@@ -33,14 +34,14 @@ int main(int argc, char **argv)
 
     char *config_file = "config.cnf", *logfilename = "log.txt", *config_logfilename;
     int opt = 0;
-    uint32_t start_index= 0, end_index= 0;
+    uint32_t end_index= 0;
     int match_low = -1, match_high = -1;
     while ((opt = getopt(argc, argv, "s::e::m::b::lhc:")) != -1) {
         switch (opt)
         {
 	    case 's':
-		if(TRUE == check_string(optarg))
-			start_index = atol(optarg);
+		//if(TRUE == check_string(optarg))
+		//	start_index = atol(optarg);
 	     break;
 	    case 'e':
 		if(TRUE == check_string(optarg))
@@ -102,7 +103,7 @@ int main(int argc, char **argv)
     string_list_t *list;
     db_index_t entry;
     
-    for(list = ncbi_nt_index.root; list && (0 == end_index || (end_index > 0 && x < end_index)); list = (string_list_t *)list->next, x++)
+    for(list = ncbi_nt_index.root; list && (0 == end_index || (end_index > 0 && x < (int)end_index)); list = (string_list_t *)list->next, x++)
     {
         index_entry[x] = list->str;
         index_offset[x] = malloc(sizeof(long));
@@ -112,10 +113,6 @@ int main(int argc, char **argv)
         *index_len[x] = entry.datalen;
     }
 
-    char *search_string = argv[1];
-
-    int search_len = strlen(search_string);
-    int search_data_len = 0;
     long nprocessors = sysconf(_SC_NPROCESSORS_ONLN);
     global_thread_count = 0;
 
@@ -146,14 +143,14 @@ int main(int argc, char **argv)
         unsigned int str_len = strlen(argv[x]);
         uint8_t data[str_len];
         uint32_t data_len = 0;
-        compress_dna(data, argv[x], str_len, &data_len);
+        compress_dna(data, argv[x], str_len, (int *)&data_len);
         add_data_to_list(&search_list_data, data, data_len, argv[x], str_len);
     }
 
 
     //loop through index segments
     long total = 0;
-    for(i = 0; i < index_size+step_size; i+=step_size, launch_thread = FALSE)
+    for(i = 0; (unsigned int)i < index_size+step_size; i+=step_size, launch_thread = FALSE)
     {
         //loop until thread is launched for this index segment
         while(FALSE == launch_thread)

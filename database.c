@@ -25,10 +25,10 @@
 #include "config.h"
 #include "case.h"
 
-const static uint8_t adenosine[] = {0,0,0,0,1,1,0,0,1,0,1,0,1,1,1,1};
-const static uint8_t cytidine[] =  {0,1,0,0,0,0,1,0,1,1,0,1,0,1,1,1};
-const static uint8_t guanosine[] = {0,0,1,0,0,1,0,1,0,1,0,1,1,0,1,1};
-const static uint8_t thymidine[] = {0,0,0,1,0,0,1,1,0,0,1,1,1,1,0,1};
+static const uint8_t adenosine[] = {0,0,0,0,1,1,0,0,1,0,1,0,1,1,1,1};
+static const uint8_t cytidine[] =  {0,1,0,0,0,0,1,0,1,1,0,1,0,1,1,1};
+static const uint8_t guanosine[] = {0,0,1,0,0,1,0,1,0,1,0,1,1,0,1,1};
+static const uint8_t thymidine[] = {0,0,0,1,0,0,1,1,0,0,1,1,1,1,0,1};
 
 
 database_t *open_db(char *path)
@@ -110,7 +110,6 @@ void add_unique_string_to_list(string_list_t *list, char * str)
 int find_genes(list_container_t *list_container, char *str, uint64_t len)
 {
     char *buf = malloc(1);
-    char *last = NULL;
     static string start_codon = "ATG";
     static string stop_codon[3] = {"TAA", "TGA", "TAG"};
     uint64_t x = 0, start_pos = 0, stop_pos = 0;
@@ -125,9 +124,9 @@ int find_genes(list_container_t *list_container, char *str, uint64_t len)
             open = TRUE;
             x+=3;
         }
-        else if(TRUE == open && (str[x] == stop_codon[0][0] && str[x+1] == stop_codon[0][1] && str[x+2] == stop_codon[0][2]||
-                str[x] == stop_codon[1][0] && str[x+1] == stop_codon[1][1] && str[x+2] == stop_codon[1][2]||
-                str[x] == stop_codon[2][0] && str[x+1] == stop_codon[2][1] && str[x+2] == stop_codon[2][2]))
+        else if(TRUE == open && ((str[x] == stop_codon[0][0] && str[x+1] == stop_codon[0][1] && str[x+2] == stop_codon[0][2])||
+                (str[x] == stop_codon[1][0] && str[x+1] == stop_codon[1][1] && str[x+2] == stop_codon[1][2])||
+                (str[x] == stop_codon[2][0] && str[x+1] == stop_codon[2][1] && str[x+2] == stop_codon[2][2])))
         {
             stop_pos = x+3;
             uint64_t gene_len = (stop_pos - start_pos);
@@ -443,17 +442,18 @@ uint8_t *get_db_data(database_t *db, long index, uint32_t length, uint8_t *data)
         return NULL;
     lseek(db->fd, index, SEEK_SET);
     data = realloc(data, length);
-    int res = read(db->fd, data, length);
+    if(-1 == read(db->fd, data, length))
+	return NULL;
     return data;
 }
 
 
 
-float best_match_score(uint8_t *str1, uint8_t *str2, int len1, int len2, float best_possible_score, float match_percentage)
+float best_match_score(uint8_t *str1, uint8_t *str2, int len1, int len2)
 {
     match_counts score;
     unsigned int score_value = 0, best_score = 0;
-    int  best_offset = -1, x, haystack_len, needle_len;
+    int x, haystack_len, needle_len;
     uint8_t *haystack, *needle;
 
      if(len1 >= len2)
@@ -514,15 +514,13 @@ unsigned int calculate_score(match_counts *score)
 void match_dna(char *str1, char* str2, unsigned int length, match_counts *score)
 {
 
-	int x, pos, bytepos = 0;
-	char databyte = '\0';
+	int x;
 	uint8_t basecode1, basecode2, res;
-	unsigned int match_count = 0;
 	score->none = score->strong = score->medium = score->weak = score->very_weak = score->string_len = score->string_weight = 0;
 
     int bail = (int)((float)length*((float)main_config->match_bail_percentage/1000.0f));
-
-    for(x = 0, pos = 0; x < length; x++)
+	
+    for(x = 0; (unsigned int)x < length; x++)
     {
 
         basecode1 = base_to_code(str1[x]) , basecode2 = base_to_code(str2[x]);
@@ -553,7 +551,7 @@ void match_dna(char *str1, char* str2, unsigned int length, match_counts *score)
                 score->string_weight += (score->string_len<<1) * STRING_LENGTH_MULT;
                 score->string_len = 0;
                 score->none++;
-                if(score->none >= bail)
+                if(score->none >= (unsigned int)bail)
                     return;
             break;
         }
@@ -569,8 +567,6 @@ void match_dna_data(uint8_t *str1, uint8_t* str2, uint32_t offset1, uint32_t off
 
 	auto uint32_t x = 0;
     auto uint32_t offs1 = offset1, offs2 = offset2, doff1 = offset1/2, doff2 = offset2/2;
-	auto uint8_t basecode1, basecode2, res;
-
 
 	memset(score, 0x00, sizeof(match_counts));
     uint32_t dlength = length/2;
@@ -673,7 +669,7 @@ uint8_t score_results(uint8_t res, match_counts *score, int bail)
             score->string_weight += (score->string_len<<1);
             score->string_len = 0;
             score->none++;
-            if(score->none >= bail)
+            if(score->none >= (unsigned int)bail)
                 return 1;
         break;
     }
@@ -703,7 +699,7 @@ uint8_t score_results(uint8_t res, match_counts *score, int bail)
             score->string_weight += (score->string_len<<1);
             score->string_len = 0;
             score->none++;
-            if(score->none >= bail)
+            if(score->none >= (unsigned int)bail)
                 return 1;
         break;
     }
@@ -713,10 +709,8 @@ uint8_t score_results(uint8_t res, match_counts *score, int bail)
 void make_match_string(char *dest, char *str1, char* str2, unsigned int length)
 {
 
-	int x, pos, bytepos = 0;
-	char databyte = '\0';
+	int x;
 	uint8_t basecode1, basecode2, res;
-	unsigned int match_count = 0;
 
     char red[13];
     sprintf(red, "%c[%d;%d;%dm", 0x1B, 1, 31, 40);
@@ -737,10 +731,9 @@ void make_match_string(char *dest, char *str1, char* str2, unsigned int length)
     char reset[13];
     sprintf(reset, "%c[%d;%d;%dm", 0x1B, 0, 37, 40);
 
-	int len1 = strlen(str1), len2 = strlen(str2);
     char match_str[length*15];
     strcpy(match_str,"");
-	for(x = 0, pos = 0; x < length; x++)
+	for(x = 0; x < (int)length; x++)
 	{
         basecode1 = base_to_code(str1[x]) , basecode2 = base_to_code(str2[x]);
         res = match_bytecodes(basecode1, basecode2);
@@ -880,9 +873,7 @@ These are the official IUPAC-IUB single-letter base codes (reference 1 below).
 
 
     //printf("expand_dna length %i\n" , length);
-	int cdatalen = 0;
-	int x, pos, bytepos = 0;
-	char databyte = '\0';
+	int x, pos;
 	uint8_t U = 0;
 	for(x = 0, pos = 0; x < length; x++)
 	{
